@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>Cartoon Platformer Bouncy</title>
+
+<style>
+body{
+    margin:0;
+    background:#6fb1fc;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:Tahoma;
+}
+#game{
+    width:900px;
+    height:450px;
+    background:linear-gradient(#87ceeb,#eaf6ff);
+    position:relative;
+    overflow:hidden;
+    border-radius:25px;
+    box-shadow:0 20px 40px rgba(0,0,0,.4);
+}
+
+/* HUD */
+#hud{
+    position:absolute;
+    top:10px;
+    right:20px;
+    font-size:16px;
+    background:rgba(255,255,255,.85);
+    padding:8px 14px;
+    border-radius:12px;
+}
+
+/* ground */
+#ground{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:90px;
+    background:linear-gradient(#2ecc71,#27ae60);
+}
+#ground::after{
+    content:"";
+    position:absolute;
+    bottom:-25px;
+    width:100%;
+    height:40px;
+    background:#8e5a2a;
+}
+
+/* player */
+#player{
+    position:absolute;
+    width:50px;
+    height:55px;
+    bottom:90px;
+    left:60px;
+    transition: transform 0.1s ease;
+}
+#body{
+    width:50px;
+    height:40px;
+    background:#ff4757;
+    border-radius:20px;
+    position:relative;
+}
+#hat{
+    width:35px;
+    height:15px;
+    background:#2f3542;
+    border-radius:10px;
+    position:absolute;
+    top:-12px;
+    left:8px;
+}
+.eye{
+    width:6px;
+    height:6px;
+    background:black;
+    border-radius:50%;
+    position:absolute;
+    top:14px;
+}
+.eye.left{left:14px;}
+.eye.right{right:14px;}
+
+/* enemy */
+.enemy{
+    position:absolute;
+    width:40px;
+    height:40px;
+    bottom:90px;
+    background:#3742fa;
+    border-radius:12px;
+}
+
+/* coin */
+.coin{
+    position:absolute;
+    width:20px;
+    height:20px;
+    background:gold;
+    border-radius:50%;
+    box-shadow:0 0 10px gold;
+}
+
+/* start */
+#start{
+    position:absolute;
+    top:15px;
+    left:15px;
+    padding:10px 20px;
+    background:#2f3542;
+    color:white;
+    border-radius:15px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+    <div id="start">شروع بازی</div>
+    <div id="hud"></div>
+
+    <div id="player">
+        <div id="body">
+            <div id="hat"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+        </div>
+    </div>
+
+    <div id="ground"></div>
+</div>
+
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const start = document.getElementById("start");
+const hud = document.getElementById("hud");
+
+let x=60, y=90, vy=0, jumping=false, running=false;
+let score=0, level=1, lives=3;
+let enemySpeed=3;
+
+// کلیدها برای حرکت افقی در هوا
+let leftPressed=false, rightPressed=false;
+
+// enemies
+const enemies=[];
+for(let i=0;i<2;i++){  // 2 دشمن
+    let e=document.createElement("div");
+    e.className="enemy";
+    e.style.left=(900+i*300)+"px";
+    game.appendChild(e);
+    enemies.push(e);
+}
+
+// coin
+let coin=document.createElement("div");
+coin.className="coin";
+game.appendChild(coin);
+resetCoin();
+
+function resetCoin(){
+    coin.style.left=Math.random()*700+100+"px";
+    coin.style.bottom="120px";
+}
+
+start.onclick=()=>{
+    running=true;
+    start.style.display="none";
+};
+
+// کنترل کلیدها
+document.addEventListener("keydown", e=>{
+    if(!running) return;
+    if(e.key==="ArrowRight") rightPressed = true;
+    if(e.key==="ArrowLeft") leftPressed = true;
+    if(e.key==="ArrowUp" && !jumping){
+        vy = 16;
+        jumping = true;
+    }
+});
+document.addEventListener("keyup", e=>{
+    if(e.key==="ArrowRight") rightPressed = false;
+    if(e.key==="ArrowLeft") leftPressed = false;
+});
+
+function collide(a,b){
+    let r1=a.getBoundingClientRect();
+    let r2=b.getBoundingClientRect();
+    return !(r1.right<r2.left||r1.left>r2.right||r1.bottom<r2.top||r1.top>r2.bottom);
+}
+
+function updateHUD(){
+    hud.innerText=`مرحله: ${level} | امتیاز: ${score} | جان: ${"❤️".repeat(lives)}`;
+}
+
+function loop(){
+    if(running){
+        // حرکت افقی
+        if(rightPressed) x += 10;
+        if(leftPressed) x -= 10;
+
+        // پرش و گرانش
+        vy -= 0.8;
+        y += vy;
+
+        // محدودیت ارتفاع
+        if(y > 250){
+            y = 250;
+            vy = -vy*0.5;
+        }
+
+        // bounce هنگام برخورد با زمین
+        if(y <= 90){
+            y = 90;
+            vy = -vy*0.5;
+            if(Math.abs(vy) < 1.5) vy = 0;
+            jumping = false;
+            player.style.transform = "scale(1.2,0.8)";
+            setTimeout(()=>player.style.transform="scale(1,1)",100);
+        } else {
+            player.style.transform = "scale(0.9,1.1)";
+        }
+
+        // حرکت دشمن و برخورد
+        enemies.forEach((enemy,i)=>{
+            enemy.style.left = (enemy.offsetLeft - enemySpeed) + "px";
+            if(enemy.offsetLeft < -50) enemy.style.left = 900 + i*300 + "px";
+            if(collide(player,enemy)){
+                lives--;
+                enemy.style.left = 900 + i*300 + "px";
+                if(lives <= 0){
+                    alert("Game Over");
+                    location.reload();
+                }
+            }
+        });
+
+        // سکه
+        if(collide(player,coin)){
+            score += 10;
+            resetCoin();
+            if(score % 50 === 0){
+                level++;
+                enemySpeed++;
+            }
+        }
+
+        player.style.left = x + "px";
+        player.style.bottom = y + "px";
+        updateHUD();
+    }
+    requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>
