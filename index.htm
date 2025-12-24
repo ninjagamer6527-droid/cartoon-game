@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Cartoon Platformer Bouncy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
@@ -13,9 +14,11 @@ body{
     align-items:center;
     height:100vh;
     font-family:Tahoma;
+    touch-action:none;
 }
 #game{
     width:900px;
+    max-width:100%;
     height:450px;
     background:linear-gradient(#87ceeb,#eaf6ff);
     position:relative;
@@ -119,6 +122,26 @@ body{
     border-radius:15px;
     cursor:pointer;
 }
+
+/* دکمه‌های لمسی */
+#touch-controls{
+  position:absolute;
+  bottom:20px;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  pointer-events:auto;
+}
+#touch-controls button{
+  width:80px;
+  height:80px;
+  font-size:30px;
+  border:none;
+  border-radius:50%;
+  background:rgba(0,0,0,0.4);
+  color:white;
+  touch-action:none;
+}
 </style>
 </head>
 
@@ -137,6 +160,13 @@ body{
     </div>
 
     <div id="ground"></div>
+
+    <!-- دکمه‌های لمسی -->
+    <div id="touch-controls">
+      <button id="left-btn">◀️</button>
+      <button id="jump-btn">⬆️</button>
+      <button id="right-btn">▶️</button>
+    </div>
 </div>
 
 <script>
@@ -149,12 +179,12 @@ let x=60, y=90, vy=0, jumping=false, running=false;
 let score=0, level=1, lives=3;
 let enemySpeed=3;
 
-// کلیدها برای حرکت افقی در هوا
+// کنترل کلیدها و لمسی
 let leftPressed=false, rightPressed=false;
 
 // enemies
 const enemies=[];
-for(let i=0;i<2;i++){  // 2 دشمن
+for(let i=0;i<2;i++){
     let e=document.createElement("div");
     e.className="enemy";
     e.style.left=(900+i*300)+"px";
@@ -178,7 +208,7 @@ start.onclick=()=>{
     start.style.display="none";
 };
 
-// کنترل کلیدها
+// کنترل کیبورد
 document.addEventListener("keydown", e=>{
     if(!running) return;
     if(e.key==="ArrowRight") rightPressed = true;
@@ -191,6 +221,20 @@ document.addEventListener("keydown", e=>{
 document.addEventListener("keyup", e=>{
     if(e.key==="ArrowRight") rightPressed = false;
     if(e.key==="ArrowLeft") leftPressed = false;
+});
+
+// کنترل لمسی
+document.getElementById("left-btn").addEventListener("touchstart", ()=>{ leftPressed=true; });
+document.getElementById("left-btn").addEventListener("touchend", ()=>{ leftPressed=false; });
+
+document.getElementById("right-btn").addEventListener("touchstart", ()=>{ rightPressed=true; });
+document.getElementById("right-btn").addEventListener("touchend", ()=>{ rightPressed=false; });
+
+document.getElementById("jump-btn").addEventListener("touchstart", ()=>{
+    if(!jumping){
+        vy = 16;
+        jumping = true;
+    }
 });
 
 function collide(a,b){
