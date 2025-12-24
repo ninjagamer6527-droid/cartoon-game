@@ -10,12 +10,30 @@ body{
     margin:0;
     background:#6fb1fc;
     display:flex;
-    justify-content:center;
+    flex-direction:column;
     align-items:center;
-    height:100vh;
-    font-family:Tahoma;
+    font-family:'Comic Sans MS', cursive, sans-serif;
     touch-action:none;
 }
+
+/* Blade خوشگل */
+#game-title{
+    text-align:center;
+    font-size:36px;
+    font-weight:bold;
+    color:#ff6f61;
+    text-shadow:
+        2px 2px 0 #ffe066,
+        4px 4px 0 #ffb347,
+        6px 6px 0 #ff6f61;
+    margin-bottom:15px;
+    animation: float 2s infinite alternate;
+}
+@keyframes float{
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+}
+
 #game{
     width:900px;
     max-width:100%;
@@ -123,7 +141,7 @@ body{
     cursor:pointer;
 }
 
-/* دکمه‌های لمسی */
+/* دکمه‌های لمسی خوشگل */
 #touch-controls{
   position:absolute;
   bottom:20px;
@@ -131,21 +149,34 @@ body{
   display:flex;
   justify-content:space-around;
   pointer-events:auto;
+  z-index:10;
 }
 #touch-controls button{
-  width:80px;
-  height:80px;
-  font-size:30px;
+  width:90px;
+  height:90px;
+  font-size:32px;
   border:none;
   border-radius:50%;
-  background:rgba(0,0,0,0.4);
+  background:linear-gradient(145deg, #ff7f50, #ff6347);
   color:white;
+  box-shadow:0 6px 12px rgba(0,0,0,0.3);
   touch-action:none;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+#touch-controls button:active{
+  transform: scale(0.9);
+  box-shadow:0 3px 6px rgba(0,0,0,0.2);
+}
+#touch-controls button:not(:last-child){
+  margin-right:20px;
 }
 </style>
 </head>
 
 <body>
+
+<!-- Blade بیرون کادر بازی -->
+<div id="game-title">🎮 Cartoon Bouncy Adventure 🎮</div>
 
 <div id="game">
     <div id="start">شروع بازی</div>
@@ -181,6 +212,9 @@ let enemySpeed=3;
 
 // کنترل کلیدها و لمسی
 let leftPressed=false, rightPressed=false;
+
+// سرعت حرکت افقی آهسته‌تر
+const horizontalSpeed = 4; // کاهش سرعت
 
 // enemies
 const enemies=[];
@@ -249,9 +283,9 @@ function updateHUD(){
 
 function loop(){
     if(running){
-        // حرکت افقی
-        if(rightPressed) x += 10;
-        if(leftPressed) x -= 10;
+        // حرکت افقی آهسته‌تر
+        if(rightPressed) x += horizontalSpeed;
+        if(leftPressed) x -= horizontalSpeed;
 
         // پرش و گرانش
         vy -= 0.8;
